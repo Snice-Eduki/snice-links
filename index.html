@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snice · Unterrichtsmaterial – Alle Links</title>
+<meta name="description" content="Snice – Wortspeicher-Lückentexte mit Hörverstehen. eduki-Shop, Blog, Pinterest und Instagram auf einen Blick.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --tafel:#2F5D46; --tafel-h:#3D7257; --holz:#9C6B3C; --holz-d:#6B4423;
+    --kreide:#F7F4EA; --papier:#fff; --rot:#D03C2F;
+    --hand:"Patrick Hand","Caveat",cursive; --kreideF:"Caveat","Patrick Hand",cursive; --body:"Nunito","Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{font-family:var(--body);
+       /* Holzrahmen */
+       background:
+         repeating-linear-gradient(90deg,#8a5e34 0 14px,#7e5430 14px 28px),
+         var(--holz-d);
+       padding:22px;display:flex;justify-content:center;align-items:flex-start}
+  .board{
+    width:100%;max-width:460px;border-radius:14px;
+    /* Kreidetafel mit leichter Textur */
+    background:
+       radial-gradient(circle at 30% 18%, rgba(255,255,255,.05), transparent 40%),
+       radial-gradient(circle at 75% 70%, rgba(255,255,255,.04), transparent 45%),
+       linear-gradient(160deg,var(--tafel-h),var(--tafel) 60%,#244a37);
+    border:12px solid var(--holz);
+    box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.35);
+    padding:26px 22px 30px;text-align:center;color:var(--kreide)}
+  .heads{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:64px;height:64px;border-radius:12px;background:#fff;padding:4px;object-fit:contain;
+        box-shadow:0 3px 10px rgba(0,0,0,.35)}
+  .ava{width:96px;height:96px;border-radius:50%;border:4px solid var(--kreide);object-fit:cover;
+       background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  h1{font-family:var(--kreideF);font-size:2.5rem;line-height:1;margin:10px 0 0;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .sub{font-family:var(--hand);font-size:1.18rem;color:#eafff4;opacity:.95;margin:2px 0 20px}
+  a.link{display:flex;align-items:center;gap:14px;width:100%;
+       background:var(--kreide);color:#1c1c1c;text-decoration:none;
+       border-radius:14px;padding:14px 18px;margin:11px 0;font-weight:700;font-size:1.08rem;
+       box-shadow:0 4px 0 var(--holz-d);transition:transform .1s,box-shadow .1s}
+  a.link:active{transform:translateY(3px);box-shadow:0 1px 0 var(--holz-d)}
+  a.link:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--holz-d)}
+  a.link .em{font-size:1.55rem;width:30px;text-align:center}
+  a.link .t{flex:1;text-align:left;line-height:1.15}
+  a.link .t small{display:block;font-weight:600;color:#6b6257;font-size:.78rem;margin-top:2px}
+  a.link.shop{background:#fff;border:2px solid var(--rot)}
+  .foot{font-family:var(--hand);color:#dbeee6;font-size:1rem;margin-top:24px;line-height:1.45}
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="heads">
+      <img class="logo" src="logo.png" alt="Snice Logo" onerror="this.style.display='none'">
+      <img class="ava" src="avatar.png" alt="Snice" onerror="this.style.display='none'">
+    </div>
+    <h1>Mehr für dich!</h1>
+    <div class="sub">Wortspeicher-Lückentexte mit Hörverstehen</div>
+
+    <a class="link shop" href="https://eduki.com/de/author/400839" target="_blank" rel="noopener">
+      <span class="em">🛍️</span><span class="t">eduki-Shop<small>Alle Materialien &amp; Pakete</small></span></a>
+
+    <a class="link" href="https://snice-unterrichtsmaterial.blogspot.com/" target="_blank" rel="noopener">
+      <span class="em">📝</span><span class="t">Blog<small>Ideen &amp; Unterrichtstipps</small></span></a>
+
+    <a class="link" href="https://www.pinterest.com/SniceEduki/" target="_blank" rel="noopener">
+      <span class="em">📌</span><span class="t">Pinterest<small>Material-Pins &amp; Inspiration</small></span></a>
+
+    <a class="link" href="https://www.instagram.com/snice.eduki/" target="_blank" rel="noopener">
+      <span class="em">📷</span><span class="t">Instagram<small>Gutscheine &amp; Aktionen · @snice.eduki</small></span></a>
+
+    <div class="foot">Hör- &amp; Lesematerial für Grund- und Mittelschule<br>© Snice · Unterrichtsmaterial</div>
+  </div>
+</body>
+</html>
