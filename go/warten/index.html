@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snice – Gratis-Material</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:linear-gradient(160deg,#fff6e6,#ffe9d6 40%,#ffd9c0);min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:24px;color:#3a2a1e}
+  .card{background:#fff;border-radius:24px;box-shadow:0 18px 50px rgba(120,70,30,.18);
+        max-width:440px;width:100%;padding:40px 30px;text-align:center}
+  .emoji{font-size:64px;line-height:1;margin-bottom:14px}
+  h1{font-size:24px;font-weight:800;margin-bottom:14px;line-height:1.25}
+  p{font-size:17px;line-height:1.5;color:#5c4a3c;margin-bottom:26px}
+  .btn{display:inline-block;background:#e8552d;color:#fff;text-decoration:none;font-weight:700;
+       font-size:17px;padding:15px 26px;border-radius:14px;box-shadow:0 8px 20px rgba(232,85,45,.35)}
+  .btn.sec{background:#fff;color:#e8552d;border:2px solid #e8552d;box-shadow:none;margin-top:12px}
+  .foot{margin-top:22px;font-size:13px;color:#a08b7c}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="emoji" id="emoji">🎁</div>
+    <h1 id="titel">Einen Moment …</h1>
+    <p id="text"></p>
+    <a class="btn" id="cta" href="https://www.instagram.com/snice.eduki/">Zu @snice.eduki →</a>
+    <a class="btn sec" href="https://eduki.com/de/shop/snice">Alle Materialien auf eduki</a>
+    <div class="foot">Snice – täglich neue Materialien für den Unterricht</div>
+  </div>
+<script>
+  function berlinHour(){
+    try{ return parseInt(new Intl.DateTimeFormat('de-DE',{hour:'2-digit',hour12:false,timeZone:'Europe/Berlin'}).format(new Date()),10); }
+    catch(e){ return new Date().getHours(); }
+  }
+  var h = berlinHour(), em, t, txt;
+  if(h < 6){
+    em='☀️';
+    t="Ab 6 Uhr geht’s weiter!";
+    txt="Die heutige Gratis-Aktion ist beendet – aber ab 6 Uhr morgens wartet hier schon das nächste Gratis-Material. Folge @snice.eduki, damit du es nicht verpasst!";
+  } else if(h >= 12 && h < 18){
+    em='🎁';
+    t="Heute um 18 Uhr geht’s weiter!";
+    txt="Die Vormittags-Gratis-Aktion ist vorbei – aber heute Abend um 18 Uhr gibt es neues Gratis-Material. Schau dann wieder rein!";
+  } else {
+    em='🎁';
+    t="Schau auf meinem Profil vorbei!";
+    txt="Das aktuelle Gratis-Material findest du gerade bei @snice.eduki – folge mir für täglich neue Gratis-Materialien.";
+  }
+  document.getElementById('emoji').textContent = em;
+  document.getElementById('titel').textContent = t;
+  document.getElementById('text').textContent = txt;
+</script>
+</body>
+</html>
