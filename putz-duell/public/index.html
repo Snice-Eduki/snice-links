@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E131C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Putz-Duell">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Putz-Duell</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..900&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: Handy-App mit drei Reitern (Heute / Woche / Duell), fester Kopfzeile mit Spielstand und fester Reiterleiste unten.
+   Farben: warmes Papiergrau als Grund, Teal für Matthias, Himbeere für Jermaine, Gold für Boni, eine dunkle Anzeigetafel fürs Duell. */
+:root {
+  --bg: #F2F0EA; --surface: #FFFFFF; --sunk: #E8E5DD; --ink: #1B1A17; --muted: #6A665C; --line: #D9D5CA;
+  --m: #0E7C7B; --m-soft: #D6EEED; --m-ink: #FFFFFF;
+  --j: #B33A6B; --j-soft: #F7DCE7; --j-ink: #FFFFFF;
+  --gold: #D29B1E; --gold-soft: #F8EBC9; --ok: #2E8B57; --miss: #B8322E; --miss-soft: #F6DAD8;
+  --board: #1C2524; --board-2: #263332; --board-ink: #F1EFE8; --board-mute: #9FA9A6;
+  --f-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 16px; --r-sm: 10px;
+  --tab-h: 62px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121414; --surface: #1C1F1F; --sunk: #171A1A; --ink: #ECEAE3; --muted: #9D998E; --line: #2D3231;
+  --m: #3FBDB9; --m-soft: #10393A; --m-ink: #06201F;
+  --j: #E8709D; --j-soft: #3F1C2B; --j-ink: #2A0714;
+  --gold: #E6B23C; --gold-soft: #3A2E12; --ok: #4CC07C; --miss: #E8625C; --miss-soft: #3E1F1E;
+  --board: #0B0F0F; --board-2: #182020; --board-ink: #F1EFE8; --board-mute: #8E9895;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121414; --surface: #1C1F1F; --sunk: #171A1A; --ink: #ECEAE3; --muted: #9D998E; --line: #2D3231;
+  --m: #3FBDB9; --m-soft: #10393A; --m-ink: #06201F;
+  --j: #E8709D; --j-soft: #3F1C2B; --j-ink: #2A0714;
+  --gold: #E6B23C; --gold-soft: #3A2E12; --ok: #4CC07C; --miss: #E8625C; --miss-soft: #3E1F1E;
+  --board: #0B0F0F; --board-2: #182020; --board-ink: #F1EFE8; --board-mute: #8E9895;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+html, body { height: 100% }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15.5px; line-height: 1.45; -webkit-text-size-adjust: 100% }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--board) }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent }
+button:disabled { cursor: not-allowed }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px }
+.num { font-variant-numeric: tabular-nums }
+.label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted) }
+.disp { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 112; letter-spacing: .01em; line-height: 1 }
+h2 { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 20px; margin: 0; line-height: 1.1; text-wrap: balance }
+h3 { font-family: var(--f-display); font-weight: 700; font-variation-settings: "wdth" 105; font-size: 16px; margin: 0; line-height: 1.2 }
+.m-c { color: var(--m) } .j-c { color: var(--j) }
+
+/* Kopfzeile */
+.head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--board); color: var(--board-ink);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px 10px;
+  display: grid; gap: 8px; box-shadow: 0 1px 0 rgba(0,0,0,.25) }
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: 620px; margin: 0 auto; width: 100% }
+.brand { font-family: var(--f-display); font-weight: 900; font-variation-settings: "wdth" 120; font-size: 22px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; display: flex; align-items: center; gap: 8px }
+.brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--board-mute); flex: none }
+.brand i.live { background: var(--ok); box-shadow: 0 0 0 3px rgba(76,192,124,.25) }
+.brand i.local { background: var(--gold) }
+.me-chip { border: 1px solid var(--board-2); background: var(--board-2); color: var(--board-ink); padding: 6px 10px 6px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 7px; max-width: 55%; min-width: 0 }
+.me-chip .av { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; font-family: var(--f-display); flex: none }
+.av.m { background: var(--m); color: var(--m-ink) } .av.j { background: var(--j); color: var(--j-ink) }
+.me-chip span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mini { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; max-width: 620px; margin: 0 auto; width: 100% }
+.mini .side { display: flex; align-items: baseline; gap: 8px; min-width: 0 }
+.mini .side.j { flex-direction: row-reverse }
+.mini .nm { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--board-mute); white-space: nowrap }
+.mini .sc { font-family: var(--f-display); font-weight: 900; font-variation-settings: "wdth" 115; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums }
+.mini .side.m .sc { color: #5FD3CF } .mini .side.j .sc { color: #F39AC0 }
+.mini .kw { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--board-mute); text-align: center; line-height: 1.2 }
+.mini .kw b { display: block; color: var(--board-ink); font-size: 12px }
+.sc.pop { animation: pop .5s cubic-bezier(.2,1.4,.4,1) }
+@keyframes pop { 0% { transform: scale(1) } 35% { transform: scale(1.35) } 100% { transform: scale(1) } }
+
+/* Seiteninhalt */
+.page { max-width: 620px; margin: 0 auto; padding-block: 16px calc(var(--tab-h) + 28px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px }
+.view[hidden] { display: none }
+.view { display: grid; gap: 18px }
+.notice { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--ink); padding: 10px 12px; border-radius: var(--r-sm); font-size: 14px }
+.dateline { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.dateline .big { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 26px; line-height: 1.05 }
+.dateline .sub { color: var(--muted); font-size: 13.5px }
+section { display: grid; gap: 10px }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px }
+.sec-head .label.m { color: var(--m) } .sec-head .label.j { color: var(--j) }
+.list { display: grid; gap: 8px }
+.empty { color: var(--muted); font-size: 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--r-sm); background: var(--surface) }
+
+/* Aufgabenkarte */
+.task { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 11px 12px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); position: relative; overflow: hidden; min-width: 0 }
+.task::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--line) }
+.task.m::before { background: var(--m) } .task.j::before { background: var(--j) }
+.task.done.m { background: var(--m-soft); border-color: transparent } .task.done.j { background: var(--j-soft); border-color: transparent }
+.task.done.by-other::before { background: repeating-linear-gradient(180deg, var(--ink) 0 6px, transparent 6px 10px) }
+.task.missed { border-color: var(--miss) }
+.task.expired { opacity: .55 }
+.check { width: 46px; height: 46px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; transition: transform .12s, background .15s; flex: none; position: relative }
+.check:not(:disabled):active { transform: scale(.92) }
+.check:disabled { opacity: .45 }
+.check svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none }
+.check .ic-check { display: none } .check .ic-plus { display: block; opacity: .5 }
+.check.on { color: #fff } .check.on .ic-check { display: block } .check.on .ic-plus { display: none }
+.check.on.m { background: var(--m); border-color: var(--m); color: var(--m-ink) } .check.on.j { background: var(--j); border-color: var(--j); color: var(--j-ink) }
+.check.rescue { border-style: dashed; border-color: var(--gold); color: var(--gold) } .check.rescue .ic-plus { opacity: 1 }
+.check.late { border-color: var(--miss); color: var(--miss) } .check.late .ic-plus { opacity: 1 }
+.check.lock .ic-plus { display: none } .check.lock .ic-lock { display: block }
+.check .ic-lock { display: none; width: 20px; height: 20px }
+.t-body { min-width: 0; display: grid; gap: 2px }
+.t-name { font-weight: 700; line-height: 1.2; font-size: 16px }
+.t-hint { font-size: 13px; color: var(--muted); line-height: 1.3 }
+.t-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px }
+.chip { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent }
+.chip.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok) }
+.chip.late { background: var(--miss-soft); color: var(--miss) }
+.chip.miss { background: var(--miss); color: #fff }
+.chip.rescue { background: var(--gold); color: #1B1A17 }
+.chip.open { border-color: var(--line); color: var(--muted) }
+.chip.who-m { background: var(--m); color: var(--m-ink) } .chip.who-j { background: var(--j); color: var(--j-ink) }
+.chip.early { background: var(--m-soft); color: var(--ink); border-color: var(--line) }
+.t-pts { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 22px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1 }
+.t-pts small { display: block; font-family: var(--f-body); font-weight: 400; font-size: 11px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-top: 3px }
+.t-pts.zero { color: var(--muted); text-decoration: line-through }
+
+/* Zusammenfassung Heute */
+.today-sum { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px }
+.today-sum .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px }
+.today-sum .row b { font-variant-numeric: tabular-nums }
+.prog { height: 8px; border-radius: 999px; background: var(--sunk); overflow: hidden }
+.prog i { display: block; height: 100%; border-radius: inherit; transition: width .4s }
+.prog i.m { background: var(--m) } .prog i.j { background: var(--j) } .prog i.gold { background: var(--gold) }
+
+/* Quest */
+.quest { background: var(--surface); border: 2px dashed var(--gold); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px }
+.quest .q-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap }
+.btn { border: 0; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-weight: 700; font-size: 14px; white-space: nowrap }
+.btn.gold { background: var(--gold); color: #1B1A17 }
+.btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink) }
+.btn:disabled { opacity: .45 }
+
+/* Woche */
+.weeknav { display: grid; grid-template-columns: 44px 1fr 44px; gap: 8px; align-items: center }
+.weeknav .ttl { text-align: center; display: grid; gap: 2px }
+.weeknav .ttl b { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 20px; line-height: 1 }
+.weeknav .ttl small { color: var(--muted); font-size: 12.5px }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; width: 44px; height: 44px; display: grid; place-items: center; font-size: 22px; line-height: 1 }
+.roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.role { border-radius: var(--r-sm); padding: 8px 10px; display: grid; gap: 1px; min-width: 0 }
+.role.m { background: var(--m-soft) } .role.j { background: var(--j-soft) }
+.role b { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 15px }
+.role span { font-size: 12.5px; color: var(--muted) }
+.role .wk { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); font-size: 13px }
+.day { display: grid; gap: 6px }
+.day-head { display: flex; align-items: baseline; gap: 8px }
+.day-head b { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 115; font-size: 18px; text-transform: uppercase }
+.day-head small { color: var(--muted); font-size: 13px }
+.day-head .tag { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--miss) }
+.day.is-today .day-head b { color: var(--gold) }
+.day .task { padding: 8px 10px; border-radius: var(--r-sm) }
+.day .check { width: 38px; height: 38px; border-radius: 11px }
+.day .check svg { width: 20px; height: 20px }
+.day .t-name { font-size: 15px } .day .t-hint { display: none } .day .t-pts { font-size: 18px }
+.week-foot { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px; font-size: 14px }
+.week-foot .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap }
+
+/* Anzeigetafel */
+.board { background: var(--board); color: var(--board-ink); border-radius: 22px; padding: 18px 16px 16px; display: grid; gap: 14px; overflow: hidden; position: relative }
+.board .label { color: var(--board-mute) }
+.b-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center }
+.b-side { display: grid; gap: 4px; min-width: 0 }
+.b-side.j { text-align: right; justify-items: end }
+.b-name { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 115; font-size: clamp(18px, 5vw, 24px); text-transform: uppercase; letter-spacing: .03em; line-height: 1 }
+.b-side.m .b-name { color: #5FD3CF } .b-side.j .b-name { color: #F39AC0 }
+.b-score { font-family: var(--f-display); font-weight: 900; font-variation-settings: "wdth" 120; font-size: clamp(64px, 20vw, 108px); line-height: .9; font-variant-numeric: tabular-nums }
+.b-lead { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: var(--gold); color: #1B1A17; padding: 2px 8px; border-radius: 999px; min-height: 18px }
+.b-lead.none { visibility: hidden }
+.b-vs { font-family: var(--f-display); font-weight: 900; font-size: 22px; color: var(--board-mute); text-align: center }
+.b-bar { height: 12px; border-radius: 999px; background: var(--board-2); overflow: hidden; display: flex }
+.b-bar i { display: block; height: 100%; transition: width .5s }
+.b-bar .bm { background: #5FD3CF } .b-bar .bj { background: #F39AC0; margin-left: auto }
+.b-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--board-mute) }
+.b-foot .j { text-align: right }
+.b-foot b { color: var(--board-ink); font-variant-numeric: tabular-nums }
+.b-note { font-size: 13.5px; color: var(--board-mute); text-align: center }
+
+/* Karten */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; min-width: 0 }
+.card.gold { border-color: var(--gold); background: var(--gold-soft) }
+.ranks { display: grid; gap: 12px }
+.rank { display: grid; gap: 5px }
+.rank .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.rank .row b { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 108; font-size: 16px }
+.rank .row span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px }
+.stat { background: var(--sunk); border-radius: var(--r-sm); padding: 9px 10px; display: grid; gap: 2px; min-width: 0 }
+.stat .label { font-size: 10px }
+.stat .v { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 110; font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1 }
+.stat .v small { font-family: var(--f-body); font-weight: 400; font-size: 11px; color: var(--muted) }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.stake-text { font-family: var(--f-display); font-weight: 800; font-variation-settings: "wdth" 105; font-size: 18px; line-height: 1.25; text-wrap: balance }
+.stake-form { display: grid; grid-template-columns: 1fr auto; gap: 8px }
+.stake-form input { min-width: 0; width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 10px 12px; font: inherit }
+.result { display: grid; gap: 4px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunk); font-size: 14px }
+.result b { font-family: var(--f-display); font-weight: 800; font-size: 16px }
+.badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px }
+.badge { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px; display: grid; gap: 3px; min-width: 0; background: var(--bg) }
+.badge b { font-size: 14px; line-height: 1.2 } .badge .t-hint { font-size: 12px }
+.badge .who { display: flex; gap: 4px; margin-top: 5px }
+.badge .who span { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted) }
+.badge .who span.m.on { background: var(--m); color: var(--m-ink); border-color: var(--m) }
+.badge .who span.j.on { background: var(--j); color: var(--j-ink); border-color: var(--j) }
+.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px }
+.feed li { display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; align-items: baseline; font-size: 14px }
+.feed .dot { width: 10px; height: 10px; border-radius: 50%; align-self: center }
+.feed .dot.m { background: var(--m) } .feed .dot.j { background: var(--j) } .feed .dot.g { background: var(--gold) }
+.feed time { color: var(--muted); font-size: 12px; white-space: nowrap }
+.feed b { font-variant-numeric: tabular-nums }
+details { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 0 14px }
+details summary { cursor: pointer; padding: 12px 0; font-family: var(--f-display); font-weight: 700; font-variation-settings: "wdth" 105; font-size: 16px; list-style: none; display: flex; justify-content: space-between; align-items: center }
+details summary::after { content: "+"; font-size: 20px; color: var(--muted) }
+details[open] summary::after { content: "–" }
+details .inner { padding-bottom: 14px; display: grid; gap: 10px }
+.rules { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; max-width: 65ch }
+.scroll { overflow-x: auto }
+table.plan { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 360px }
+.plan th, .plan td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: top }
+.plan th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.plan td.num, .plan th.num { text-align: right; font-variant-numeric: tabular-nums }
+
+/* Reiterleiste */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)) }
+.tabs-in { max-width: 620px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); height: var(--tab-h) }
+.tab { border: 0; background: transparent; display: grid; justify-items: center; align-content: center; gap: 3px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--muted); border-radius: 12px; position: relative }
+.tab svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round }
+.tab[aria-selected="true"] { color: var(--ink) }
+.tab[aria-selected="true"]::after { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--gold) }
+.tab .dot { position: absolute; top: 9px; right: calc(50% - 22px); width: 9px; height: 9px; border-radius: 50%; background: var(--miss); border: 2px solid var(--surface) }
+
+/* Wer bist du? */
+.sheet { position: fixed; inset: 0; z-index: 30; background: var(--board); color: var(--board-ink); display: grid; align-content: center; gap: 18px;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px)); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+.sheet-in { max-width: 420px; margin: 0 auto; width: 100%; display: grid; gap: 18px }
+.sheet h1 { font-family: var(--f-display); font-weight: 900; font-variation-settings: "wdth" 122; font-size: clamp(40px, 13vw, 64px); line-height: .9; margin: 0; text-transform: uppercase; letter-spacing: .01em }
+.sheet h1 span { color: #5FD3CF } .sheet h1 em { font-style: normal; color: #F39AC0 }
+.sheet p { margin: 0; color: var(--board-mute); font-size: 15px; max-width: 40ch }
+.who-btns { display: grid; gap: 10px }
+.who-btn { border: 0; border-radius: 18px; padding: 18px 18px; text-align: left; display: grid; gap: 2px; font-family: var(--f-display); font-weight: 900; font-variation-settings: "wdth" 115; font-size: 28px; text-transform: uppercase; letter-spacing: .02em; transition: transform .1s }
+.who-btn:active { transform: scale(.97) }
+.who-btn small { font-family: var(--f-body); font-weight: 400; font-size: 13px; text-transform: none; letter-spacing: 0; opacity: .85 }
+.who-btn.m { background: var(--m); color: var(--m-ink) } .who-btn.j { background: var(--j); color: var(--j-ink) }
+.sheet .foot { font-size: 12.5px; color: var(--board-mute) }
+
+/* Rückmeldung */
+.toast { position: fixed; left: 50%; bottom: calc(var(--tab-h) + 14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: rise .25s ease-out }
+.toast.gold { background: var(--gold); color: #1B1A17 }
+@keyframes rise { from { opacity: 0; transform: translate(-50%, 8px) } to { opacity: 1; transform: translate(-50%, 0) } }
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 40; width: 100%; height: 100% }
+@media (prefers-reduced-motion: reduce) { .check, .prog i, .b-bar i, .who-btn { transition: none } .sc.pop, .toast { animation: none } }
+@media (min-width: 560px) { .badges { grid-template-columns: repeat(3, 1fr) } }
+</style>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<header class="head">
+  <div class="head-row">
+    <div class="brand"><i id="live-dot" title="Verbindung"></i>Putz-Duell</div>
+    <button class="me-chip" id="me-chip" type="button" aria-label="Spieler wechseln"><span class="av" id="me-av">?</span><span class="t" id="me-name">Wer bist du?</span></button>
+  </div>
+  <div class="mini" aria-label="Wochenstand">
+    <div class="side m"><span class="nm">Matthias</span><span class="sc num" id="mini-m">0</span></div>
+    <div class="kw" id="mini-kw"><b>KW –</b>Woche</div>
+    <div class="side j"><span class="nm">Jermaine</span><span class="sc num" id="mini-j">0</span></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="notice" id="notice" hidden></div>
+
+  <!-- HEUTE -->
+  <div class="view" id="view-heute" role="tabpanel">
+    <div class="dateline">
+      <div class="big" id="today-big">Heute</div>
+      <div class="sub" id="today-sub"></div>
+    </div>
+    <div class="today-sum" id="today-sum"></div>
+    <section>
+      <div class="sec-head"><h2 id="mine-title">Deine Aufgaben</h2><span class="label" id="mine-label"></span></div>
+      <div class="list" id="mine-list"></div>
+    </section>
+    <section id="open-sec">
+      <div class="sec-head"><h2>Noch offen diese Woche</h2><span class="label">Nachholen oder retten</span></div>
+      <div class="list" id="open-list"></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2 id="other-title">Gegenseite</h2><span class="label" id="other-label"></span></div>
+      <div class="list" id="other-list"></div>
+    </section>
+    <section>
+      <div class="quest">
+        <div class="sec-head"><span class="label" style="color:var(--gold)">Bonus-Quest · vierteljährlich</span><span class="t-pts">+40</span></div>
+        <h3>Fenster putzen</h3>
+        <div class="t-hint">Alle Fenster innen und außen, samt Rahmen und Fensterbänken. Wer die Quest im Quartal zuerst erledigt, kassiert die Punkte.</div>
+        <div class="q-row"><span class="t-hint" id="quest-state"></span><button class="btn gold" id="quest-btn" type="button">Hab ich gemacht</button></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- WOCHE -->
+  <div class="view" id="view-woche" role="tabpanel" hidden>
+    <div class="weeknav">
+      <button class="icon-btn" id="prev" type="button" aria-label="Vorige Woche">‹</button>
+      <div class="ttl"><b id="week-title">KW</b><small id="week-range"></small></div>
+      <button class="icon-btn" id="next" type="button" aria-label="Nächste Woche">›</button>
+    </div>
+    <div class="roles" id="roles"></div>
+    <div id="week-days" style="display:grid;gap:16px"></div>
+    <div class="week-foot" id="week-foot"></div>
+    <button class="btn ghost" id="now" type="button">Zur aktuellen Woche</button>
+  </div>
+
+  <!-- DUELL -->
+  <div class="view" id="view-duell" role="tabpanel" hidden>
+    <section class="board" aria-label="Anzeigetafel">
+      <span class="label" id="board-label">Wochenduell</span>
+      <div class="b-row">
+        <div class="b-side m"><span class="b-name">Matthias</span><span class="b-score num" id="b-m">0</span><span class="b-lead none" id="lead-m">führt</span></div>
+        <div class="b-vs">:</div>
+        <div class="b-side j"><span class="b-name">Jermaine</span><span class="b-score num" id="b-j">0</span><span class="b-lead none" id="lead-j">führt</span></div>
+      </div>
+      <div class="b-bar" aria-hidden="true"><i class="bm" id="bar-m"></i><i class="bj" id="bar-j"></i></div>
+      <div class="b-foot"><div>Gesamt <b id="tot-m">0</b></div><div class="j">Gesamt <b id="tot-j">0</b></div></div>
+      <div class="b-note" id="board-note"></div>
+    </section>
+
+    <section class="card gold" aria-label="Einsatz der Woche">
+      <div class="sec-head"><span class="label" style="color:var(--gold)">Einsatz der Woche</span><button class="btn ghost" id="stake-btn" type="button">Ändern</button></div>
+      <div class="stake-text" id="stake-text"></div>
+      <div class="t-hint" id="stake-by"></div>
+      <form class="stake-form" id="stake-form" hidden><input id="stake-input" type="text" maxlength="120" aria-label="Einsatz der Woche" autocomplete="off"><button class="btn" type="submit">Speichern</button></form>
+      <div class="result" id="last-result" hidden></div>
+    </section>
+
+    <section class="card" aria-label="Ränge und Serien">
+      <h3>Ränge</h3>
+      <div class="ranks" id="ranks"></div>
+      <div class="duo" id="streaks"></div>
+    </section>
+
+    <section class="card" aria-label="Abzeichen">
+      <h3>Abzeichen</h3>
+      <div class="badges" id="badges"></div>
+    </section>
+
+    <section class="card" aria-label="Ticker">
+      <h3>Ticker</h3>
+      <ul class="feed" id="feed"></ul>
+    </section>
+
+    <details>
+      <summary>Spielregeln</summary>
+      <div class="inner">
+        <ul class="rules">
+          <li>Montag bis Freitag hat jeder ein bis zwei Aufgaben. Die Küche wird täglich gemacht, die Wäsche zweimal pro Woche, alles andere einmal.</li>
+          <li>Die Pläne A und B wechseln jede Woche: In geraden Kalenderwochen hat Matthias Plan A, in ungeraden Jermaine. Über zwei Wochen ist es gleich verteilt (je 160 Punkte).</li>
+          <li>Am Tag selbst oder früher in der Woche erledigt: volle Punkte. Später nachgeholt: halbe Punkte.</li>
+          <li>Liegt eine Aufgabe des anderen am nächsten Tag noch offen, darfst du sie <b>retten</b>: volle Punkte plus 5 Bonus für dich, null für den anderen.</li>
+          <li>Bis Sonntag kann nachgeholt oder gerettet werden. Danach verfällt die Aufgabe.</li>
+          <li>Alle eigenen Aufgaben der Woche pünktlich selbst erledigt: <b>+20 Punkte Saubere Woche</b>.</li>
+          <li>Die Fenster sind eine Bonus-Quest pro Quartal: 40 Punkte für den, der sie zuerst macht.</li>
+          <li>Wer am Ende der Woche weniger Punkte hat, löst den Einsatz der Woche ein. Bei Gleichstand verfällt er.</li>
+          <li>Nur erledigt abhaken, was wirklich erledigt ist. Der andere sieht alles live.</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>Punkte je Aufgabe</summary>
+      <div class="inner"><div class="scroll"><table class="plan" id="pts-table"></table></div></div>
+    </details>
+    <details>
+      <summary>Wochenplan A / B</summary>
+      <div class="inner"><div class="scroll"><table class="plan" id="plan-table"></table></div><div class="t-hint">Gerade Kalenderwoche: Matthias = A, Jermaine = B. Ungerade Kalenderwoche: umgekehrt.</div></div>
+    </details>
+  </div>
+</main>
+
+<nav class="tabs" aria-label="Bereiche">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" id="tab-heute" data-view="heute" aria-selected="true" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Heute<span class="dot" id="dot-heute" hidden></span></button>
+    <button class="tab" role="tab" id="tab-woche" data-view="woche" aria-selected="false" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button>
+    <button class="tab" role="tab" id="tab-duell" data-view="duell" aria-selected="false" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"/></svg>Duell</button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-in">
+    <h1><span>Putz</span>-<em>Duell</em></h1>
+    <p>Zwei Spieler, ein Haushalt, eine Woche. Wer bist du? Dieses Handy merkt sich die Antwort.</p>
+    <div class="who-btns">
+      <button class="who-btn m" type="button" data-me="m">Matthias<small>spielt in geraden Kalenderwochen Plan A</small></button>
+      <button class="who-btn j" type="button" data-me="j">Jermaine<small>spielt in ungeraden Kalenderwochen Plan A</small></button>
+    </div>
+    <div class="foot">Du kannst das jederzeit oben rechts ändern.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  /* ===== PURE-START (reine Spiellogik ohne DOM) ===== */
+  const START = "2026-10-19";
+  const NAMES = { m: "Matthias", j: "Jermaine" };
+  const RESCUE_BONUS = 5, CLEAN_WEEK = 20, FENSTER_PTS = 40;
+  const TASKS = {
+    kueche:       { name: "Küche", hint: "Spülmaschine, Arbeitsflächen, Herd, Spüle, Boden fegen", pts: 10, rhythm: "täglich" },
+    bad:          { name: "Bad", hint: "Dusche, WC, Waschbecken, Spiegel, Boden wischen", pts: 25, rhythm: "wöchentlich" },
+    gwc:          { name: "Gäste-WC", hint: "WC, Waschbecken, Spiegel, Boden", pts: 10, rhythm: "wöchentlich" },
+    schlaf:       { name: "Schlafzimmer", hint: "Saugen, Staub wischen, Bett frisch beziehen", pts: 15, rhythm: "wöchentlich" },
+    waesche_koch: { name: "Wäsche: Kochwäsche", hint: "Handtücher und Bettwäsche waschen, aufhängen, wegräumen", pts: 10, rhythm: "wöchentlich" },
+    waesche_bunt: { name: "Wäsche: Buntwäsche", hint: "Waschen, aufhängen, zusammenlegen", pts: 10, rhythm: "wöchentlich" },
+    garderobe:    { name: "Garderobe", hint: "Schuhe ordnen, Jacken aufhängen, Boden saugen", pts: 10, rhythm: "wöchentlich" },
+    wohn:         { name: "Wohn- & Esszimmer", hint: "Saugen, wischen, Tisch, Staub, Sofa aufschütteln", pts: 25, rhythm: "wöchentlich" },
+    blumen:       { name: "Blumen gießen", hint: "Alle Pflanzen, auch Balkon und Fensterbank", pts: 5, rhythm: "wöchentlich" }
+  };
+  // Plan je Wochentag: a = Plan A, b = Plan B. Beide Pläne sind 80 Punkte wert.
+  const PLAN = [
+    { a: ["kueche", "waesche_koch"], b: ["bad"] },
+    { a: ["gwc", "blumen"],          b: ["kueche"] },
+    { a: ["kueche"],                 b: ["schlaf"] },
+    { a: ["wohn"],                   b: ["kueche", "waesche_bunt"] },
+    { a: ["kueche"],                 b: ["garderobe"] }
+  ];
+  const DAYN = ["Mo", "Di", "Mi", "Do", "Fr"];
+  const DAYL = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+  const RANKS = [[0, "Rekrut"], [80, "Lappen-Lehrling"], [200, "Schwamm-Geselle"], [400, "Wischmeister"], [650, "Glanz-Veteran"], [1000, "Hausputz-Elite"], [1500, "Legende des Haushalts"]];
+  const DEFAULT_STAKE = "Wer verliert, kocht am Wochenende für beide.";
+
+  const pad = n => String(n).padStart(2, "0");
+  const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const fromIso = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
+  const weekday = d => (d.getDay() + 6) % 7; // 0 = Montag
+  const monday = d => addDays(d, -weekday(d));
+  function isoWeekInfo(d) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return { week: Math.ceil(((t - y0) / 864e5 + 1) / 7), year: t.getUTCFullYear() };
+  }
+  const isoWeek = d => isoWeekInfo(d).week;
+  const weekKey = mon => { const w = isoWeekInfo(mon); return w.year + "-W" + pad(w.week); };
+  const quarterKey = d => "fenster_" + d.getFullYear() + "-Q" + (Math.floor(d.getMonth() / 3) + 1);
+  const roleOf = mon => (isoWeek(mon) % 2 === 0 ? { a: "m", b: "j" } : { a: "j", b: "m" });
+  const planOf = (mon, p) => (roleOf(mon).a === p ? "A" : "B");
+  const weekNo = mon => Math.round((mon - monday(fromIso(START))) / 6048e5) + 1;
+
+  function tasksFor(mon, di) {
+    const r = roleOf(mon), p = PLAN[di], date = iso(addDays(mon, di)), list = [];
+    for (const side of ["a", "b"]) for (const k of p[side]) list.push({ id: date + "_" + k, key: k, owner: r[side], date, di, ...TASKS[k] });
+    return list;
+  }
+  const weekTasks = mon => [0, 1, 2, 3, 4].flatMap(i => tasksFor(mon, i));
+  const sundayOf = dateIso => iso(addDays(monday(fromIso(dateIso)), 6));
+
+  // Was darf "me" mit Aufgabe t am Tag today tun? d = vorhandener Eintrag.
+  function actionFor(t, me, today, d) {
+    if (d) return d.who === me ? { type: "undo" } : { type: "locked" };
+    if (t.date < START) return { type: "none" };
+    if (today > sundayOf(t.date)) return { type: "expired" };
+    if (!me) return { type: "none" };
+    if (t.date > today) return t.owner === me && monday(fromIso(t.date)).getTime() === monday(fromIso(today)).getTime() ? { type: "early", kind: "ok", pts: t.pts } : { type: "none" };
+    if (t.date === today) return t.owner === me ? { type: "do", kind: "ok", pts: t.pts } : { type: "wait" };
+    return t.owner === me ? { type: "late", kind: "late", pts: Math.round(t.pts / 2) } : { type: "rescue", kind: "rescue", pts: t.pts + RESCUE_BONUS };
+  }
+
+  const weekScored = mon => iso(addDays(mon, 4)) >= START;
+  function cleanWeek(done, mon, p) {
+    if (!weekScored(mon)) return false;
+    return weekTasks(mon).filter(t => t.owner === p).every(t => { const d = done.get(t.id); return d && d.who === p && d.kind === "ok"; });
+  }
+  function weekScore(done, mon, p) {
+    const from = iso(mon), to = iso(addDays(mon, 4));
+    let s = 0;
+    for (const d of done.values()) if (d.who === p && d.day >= from && d.day <= to && d.kind !== "quest") s += d.pts || 0;
+    if (cleanWeek(done, mon, p)) s += CLEAN_WEEK;
+    return s;
+  }
+  function totalScore(done, p, today) {
+    let s = 0;
+    for (const d of done.values()) if (d.who === p) s += d.pts || 0;
+    for (let mon = monday(fromIso(START)); mon <= monday(fromIso(today)); mon = addDays(mon, 7)) if (cleanWeek(done, mon, p)) s += CLEAN_WEEK;
+    return s;
+  }
+  function rankOf(pts) {
+    let i = 0; while (i + 1 < RANKS.length && pts >= RANKS[i + 1][0]) i++;
+    const next = RANKS[i + 1];
+    return { name: RANKS[i][1], from: RANKS[i][0], next: next ? next[1] : null, to: next ? next[0] : null, progress: next ? (pts - RANKS[i][0]) / (next[0] - RANKS[i][0]) : 1 };
+  }
+  // Serie: aufeinanderfolgende Arbeitstage mit allen eigenen Aufgaben pünktlich. Der heutige Tag zählt, wenn fertig, bricht aber nicht ab.
+  function dayClean(done, d, p) {
+    const own = tasksFor(monday(d), weekday(d)).filter(t => t.owner === p);
+    return own.every(t => { const x = done.get(t.id); return x && x.who === p && x.kind === "ok"; });
+  }
+  function streak(done, p, today) {
+    let n = 0, d = fromIso(today);
+    for (let i = 0; i < 400; i++, d = addDays(d, -1)) {
+      const di = iso(d);
+      if (di < START) break;
+      if (weekday(d) > 4) continue;
+      if (dayClean(done, d, p)) n++; else if (di === today) continue; else break;
+    }
+    return n;
+  }
+  function maxStreak(done, p, today) {
+    let best = 0, n = 0;
+    for (let d = fromIso(START); iso(d) <= today; d = addDays(d, 1)) {
+      if (weekday(d) > 4) continue;
+      if (dayClean(done, d, p)) { n++; best = Math.max(best, n); } else if (iso(d) !== today) n = 0;
+    }
+    return best;
+  }
+  const weekFinal = (mon, today) => today > iso(addDays(mon, 6));
+  function weekResult(done, mon, today) {
+    const m = weekScore(done, mon, "m"), j = weekScore(done, mon, "j");
+    const r = { m, j, final: weekFinal(mon, today) && weekScored(mon), winner: null, loser: null };
+    if (m > j) { r.winner = "m"; r.loser = "j"; } else if (j > m) { r.winner = "j"; r.loser = "m"; }
+    return r;
+  }
+  /* ===== PURE-END ===== */
+
+  // ---- Zustand ----
+  const S = { done: new Map(), weeks: new Map(), me: null, view: "heute", weekOffset: 0, db: null, mode: "connecting", todayOverride: null };
+  const todayIso = () => S.todayOverride || iso(new Date());
+  try { S.me = localStorage.getItem("putzduell-me") || null; } catch (e) {}
+  try { const v = localStorage.getItem("putzduell-view"); if (v && ["heute", "woche", "duell"].includes(v)) S.view = v; } catch (e) {}
+
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const fmt = d => d.toLocaleDateString("de-DE", { day: "numeric", month: "short" });
+  const fmtLong = d => DAYL[weekday(d)] + ", " + d.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
+  const ICONS = '<svg class="ic-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="ic-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><svg class="ic-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
+  // ---- Speicher ----
+  function saveLocal() { try { localStorage.setItem("putzduell-local", JSON.stringify({ done: [...S.done], weeks: [...S.weeks] })); } catch (e) {} }
+  function loadLocal() { try { const x = JSON.parse(localStorage.getItem("putzduell-local") || "null"); if (x) { S.done = new Map(x.done || []); S.weeks = new Map(x.weeks || []); } } catch (e) {} }
+  async function writeDone(id, body) { if (S.db) await S.db.collection("done").doc(id).set(body); else { S.done.set(id, body); saveLocal(); render(); } }
+  async function removeDone(id) { if (S.db) await S.db.collection("done").doc(id).delete(); else { S.done.delete(id); saveLocal(); render(); } }
+  async function writeWeek(key, body) { if (S.db) await S.db.collection("weeks").doc(key).set(body); else { S.weeks.set(key, body); saveLocal(); render(); } }
+
+  // ---- Rückmeldung ----
+  let toastTimer = 0;
+  function toast(msg, gold) {
+    document.querySelectorAll(".toast").forEach(t => t.remove());
+    const t = el("div", "toast" + (gold ? " gold" : ""), msg); t.setAttribute("role", "status");
+    document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 2800);
+  }
+  function needMe() { if (!S.me) { openSheet(); return true; } return false; }
+
+  // ---- Aktionen ----
+  async function onTask(t, btn) {
+    if (needMe()) return;
+    const today = todayIso(), d = S.done.get(t.id), a = actionFor(t, S.me, today, d);
+    try {
+      switch (a.type) {
+        case "undo": await removeDone(t.id); toast("Zurückgenommen."); return;
+        case "locked": toast("Das hat " + NAMES[d.who] + " schon erledigt."); return;
+        case "expired": toast("Diese Aufgabe ist verfallen. Bis Sonntag der Woche hätte sie gezählt."); return;
+        case "wait": toast("Das ist heute " + NAMES[t.owner] + "s Aufgabe. Retten geht ab morgen."); return;
+        case "none": toast(t.date > today ? "Das ist eine Aufgabe von " + NAMES[t.owner] + "." : "Diese Woche zählt noch nicht."); return;
+      }
+      const body = { who: S.me, owner: t.owner, task: t.key, day: t.date, kind: a.kind, pts: a.pts, at: Date.now() };
+      if (a.type === "early") body.early = true;
+      await writeDone(t.id, body);
+      burst(btn, a.type === "rescue" ? "gold" : S.me);
+      if (a.type === "rescue") toast("Gerettet! +" + a.pts + " für dich, 0 für " + NAMES[t.owner] + ".", true);
+      else if (a.type === "late") toast("Nachgeholt. +" + a.pts + " (halbe Punkte).");
+      else if (a.type === "early") toast("Vorgezogen! +" + a.pts + " Punkte.");
+      else toast("+" + a.pts + " Punkte. " + praise());
+      checkCleanWeekToast(t);
+    } catch (e) { toast("Konnte nicht speichern. Bitte nochmal versuchen."); }
+  }
+  const PRAISE = ["Sauber.", "Läuft bei dir.", "Blitzblank.", "So geht das.", "Weiter so.", "Das sitzt."];
+  const praise = () => PRAISE[Math.floor(Math.random() * PRAISE.length)];
+  function checkCleanWeekToast(t) {
+    const mon = monday(fromIso(t.date));
+    setTimeout(() => { if (cleanWeek(S.done, mon, S.me)) toast("Saubere Woche! +" + CLEAN_WEEK + " Bonus.", true); }, 1200);
+  }
+  async function onQuest(btn) {
+    if (needMe()) return;
+    const id = quarterKey(fromIso(todayIso())), d = S.done.get(id);
+    try {
+      if (d) { if (d.who === S.me) { await removeDone(id); toast("Zurückgenommen."); } return; }
+      await writeDone(id, { who: S.me, owner: S.me, task: "fenster", day: todayIso(), kind: "quest", pts: FENSTER_PTS, at: Date.now() });
+      burst(btn, "gold"); toast("Bonus-Quest geschafft! +" + FENSTER_PTS + " Punkte.", true);
+    } catch (e) { toast("Konnte nicht speichern. Bitte nochmal versuchen."); }
+  }
+
+  // ---- Bausteine ----
+  function taskCard(t, opts) {
+    const today = todayIso(), d = S.done.get(t.id), a = actionFor(t, S.me, today, d);
+    const row = el("div", "task " + (d ? d.who + " done" + (d.who !== t.owner ? " by-other" : "") : t.owner));
+    if (!d && (a.type === "late" || a.type === "rescue" || (t.date < today && t.date >= START && a.type !== "expired"))) row.classList.add("missed");
+    if (a.type === "expired") row.classList.add("expired");
+    const btn = el("button", "check" + (d ? " on " + d.who : "")); btn.type = "button"; btn.innerHTML = ICONS;
+    const tags = el("div", "t-tags"), ptsEl = el("div", "t-pts num");
+    let label = t.name;
+    if (d) {
+      if (d.kind === "rescue") { tags.append(el("span", "chip rescue", "gerettet von " + NAMES[d.who])); label += ": gerettet von " + NAMES[d.who]; }
+      else if (d.kind === "late") { tags.append(el("span", "chip late", "nachgeholt")); label += ": nachgeholt"; }
+      else { tags.append(el("span", "chip ok", d.early ? "vorgezogen" : "erledigt")); label += ": erledigt"; }
+      if (opts.showWho) tags.append(el("span", "chip who-" + d.who, NAMES[d.who]));
+      ptsEl.textContent = "+" + d.pts;
+      if (d.who === S.me) label += ", zum Zurücknehmen tippen"; else { btn.disabled = true; btn.classList.add("lock"); }
+    } else {
+      if (opts.showWho) tags.append(el("span", "chip who-" + t.owner, NAMES[t.owner]));
+      switch (a.type) {
+        case "do": tags.append(el("span", "chip open", "heute")); ptsEl.textContent = "+" + a.pts; label += " als erledigt markieren"; break;
+        case "early": tags.append(el("span", "chip open", DAYN[t.di] + " · vorziehen möglich")); ptsEl.textContent = "+" + a.pts; label += " vorziehen"; break;
+        case "late": btn.classList.add("late"); tags.append(el("span", "chip miss", "offen seit " + DAYN[t.di])); ptsEl.textContent = "+" + a.pts; ptsEl.append(el("small", null, "halbe")); label += " nachholen"; break;
+        case "rescue": btn.classList.add("rescue"); tags.append(el("span", "chip miss", "offen seit " + DAYN[t.di]), el("span", "chip rescue", "retten")); ptsEl.textContent = "+" + a.pts; ptsEl.append(el("small", null, "Bonus")); label += " retten"; break;
+        case "expired": tags.append(el("span", "chip open", "verfallen")); ptsEl.textContent = "+" + t.pts; ptsEl.classList.add("zero"); btn.disabled = true; label += ": verfallen"; break;
+        case "wait": tags.append(el("span", "chip open", "heute")); ptsEl.textContent = "+" + t.pts; btn.disabled = true; btn.classList.add("lock"); label += " (Aufgabe von " + NAMES[t.owner] + ")"; break;
+        default:
+          if (t.date < today && t.date >= START) { tags.append(el("span", "chip miss", "offen seit " + DAYN[t.di])); }
+          else tags.append(el("span", "chip open", t.date < START ? "vor Spielstart" : t.date === today ? "heute" : DAYN[t.di]));
+          ptsEl.textContent = "+" + t.pts; btn.disabled = true; if (!S.me) btn.disabled = false;
+      }
+    }
+    btn.setAttribute("aria-label", label);
+    btn.addEventListener("click", () => onTask(t, btn));
+    const body = el("div", "t-body");
+    body.append(el("div", "t-name", t.name));
+    if (!opts.compact) body.append(el("div", "t-hint", t.hint));
+    body.append(tags);
+    row.append(btn, body, ptsEl);
+    return row;
+  }
+
+  // ---- Darstellung ----
+  const prevScores = {};
+  function setScore(id, v) {
+    const e = $(id); if (!e) return;
+    const s = String(v);
+    if (prevScores[id] !== undefined && prevScores[id] !== s && !matchMedia("(prefers-reduced-motion: reduce)").matches) { e.classList.remove("pop"); void e.offsetWidth; e.classList.add("pop"); }
+    prevScores[id] = s; e.textContent = s;
+  }
+
+  function render() {
+    const today = todayIso(), now = fromIso(today), monNow = monday(now);
+    // Kopf
+    const dot = $("live-dot"); dot.className = S.mode === "live" ? "live" : S.mode === "local" ? "local" : "";
+    dot.title = S.mode === "live" ? "Live verbunden" : S.mode === "local" ? "Nur auf diesem Gerät" : "Verbinde …";
+    $("me-av").textContent = S.me ? NAMES[S.me][0] : "?"; $("me-av").className = "av" + (S.me ? " " + S.me : "");
+    $("me-name").textContent = S.me ? "Ich: " + NAMES[S.me] : "Wer bist du?";
+    const wm = weekScore(S.done, monNow, "m"), wj = weekScore(S.done, monNow, "j");
+    setScore("mini-m", wm); setScore("mini-j", wj);
+    $("mini-kw").innerHTML = ""; $("mini-kw").append(el("b", null, "KW " + isoWeek(monNow)), document.createTextNode("Woche " + Math.max(1, weekNo(monNow))));
+    const n = $("notice");
+    n.hidden = S.mode !== "local";
+    n.textContent = "Nur auf diesem Gerät gespeichert. Der gemeinsame Spielstand ist hier gerade nicht erreichbar. Öffne die App eingeloggt über den geteilten Link, damit beide denselben Stand sehen.";
+    // Reiter
+    for (const v of ["heute", "woche", "duell"]) { $("tab-" + v).setAttribute("aria-selected", S.view === v); $("view-" + v).hidden = S.view !== v; }
+    if (S.view === "heute") renderHeute(today, now, monNow);
+    if (S.view === "woche") renderWoche(today, monNow);
+    if (S.view === "duell") renderDuell(today, monNow, wm, wj);
+    // Punkt am Reiter, wenn etwas Rettbares oder Nachholbares offen ist
+    const openCount = weekTasks(monNow).filter(t => !S.done.get(t.id) && ["late", "rescue"].includes(actionFor(t, S.me, today, null).type)).length;
+    $("dot-heute").hidden = !openCount;
+    $("sheet").hidden = !!S.me;
+  }
+
+  function renderHeute(today, now, monNow) {
+    const wd = weekday(now), weekend = wd > 4;
+    $("today-big").textContent = fmtLong(now);
+    $("today-sub").textContent = "KW " + isoWeek(now) + " · " + (S.me ? "Du hast Plan " + planOf(monNow, S.me) : "Woche " + Math.max(1, weekNo(monNow)));
+    const other = S.me === "m" ? "j" : "m";
+    const tasks = weekend ? [] : tasksFor(monNow, wd);
+    const mine = S.me ? tasks.filter(t => t.owner === S.me) : tasks;
+    const theirs = S.me ? tasks.filter(t => t.owner === other) : [];
+
+    // Zusammenfassung
+    const sum = $("today-sum"); sum.replaceChildren();
+    if (S.me) {
+      const own = weekTasks(monNow).filter(t => t.owner === S.me);
+      const doneOwn = own.filter(t => { const d = S.done.get(t.id); return d && d.who === S.me; }).length;
+      const lost = own.filter(t => { const d = S.done.get(t.id); return d && d.who !== S.me; }).length;
+      const allOk = own.every(t => { const d = S.done.get(t.id); return d && d.who === S.me && d.kind === "ok"; });
+      const r1 = el("div", "row"); r1.append(el("span", null, "Deine Woche: " + doneOwn + " von " + own.length + " Aufgaben"), el("b", "num", lost ? lost + " verloren" : allOk && doneOwn === own.length ? "Saubere Woche!" : ""));
+      const p = el("div", "prog"); const bar = el("i", S.me); bar.style.width = (own.length ? doneOwn / own.length * 100 : 0) + "%"; p.append(bar);
+      const st = streak(S.done, S.me, today);
+      const r2 = el("div", "row"); r2.append(el("span", null, "Serie: " + st + (st === 1 ? " Tag" : " Tage") + " pünktlich"), el("span", "t-hint", allOk ? "Bonus +20 in Sicht" : "Bonus +20 nur ohne Lücke"));
+      sum.append(r1, p, r2);
+    } else sum.append(el("div", "t-hint", "Wähle oben rechts, wer du bist. Dann siehst du hier deine Aufgaben."));
+
+    // Eigene Aufgaben
+    $("mine-title").textContent = S.me ? "Deine Aufgaben heute" : "Aufgaben heute";
+    $("mine-label").textContent = weekend ? "Wochenende" : mine.length + (mine.length === 1 ? " Aufgabe" : " Aufgaben");
+    const ml = $("mine-list"); ml.replaceChildren();
+    if (weekend) ml.append(el("div", "empty", "Wochenende, keine neuen Aufgaben. Offenes aus der Woche kannst du bis Sonntag nachholen oder retten."));
+    else if (!mine.length) ml.append(el("div", "empty", "Heute nichts für dich eingeplant."));
+    else for (const t of mine) ml.append(taskCard(t, { showWho: !S.me }));
+
+    // Offenes aus der Woche
+    const open = weekTasks(monNow).filter(t => t.date < today && !S.done.get(t.id) && t.date >= START);
+    const ol = $("open-list"); ol.replaceChildren();
+    $("open-sec").hidden = !open.length;
+    for (const t of open) ol.append(taskCard(t, { showWho: true }));
+
+    // Gegenseite
+    $("other-title").textContent = S.me ? NAMES[other] + " heute" : "Beide";
+    $("other-label").textContent = S.me ? (theirs.length + (theirs.length === 1 ? " Aufgabe" : " Aufgaben")) : "";
+    const tl = $("other-list"); tl.replaceChildren();
+    if (!S.me) tl.parentElement.hidden = true; else {
+      tl.parentElement.hidden = false;
+      if (weekend) tl.append(el("div", "empty", "Auch " + NAMES[other] + " hat frei."));
+      else if (!theirs.length) tl.append(el("div", "empty", NAMES[other] + " hat heute frei."));
+      else for (const t of theirs) tl.append(taskCard(t, { showWho: false }));
+    }
+
+    // Quest
+    const q = S.done.get(quarterKey(now)), qb = $("quest-btn"), qn = Math.floor(now.getMonth() / 3) + 1;
+    if (q) {
+      $("quest-state").textContent = "Q" + qn + " " + now.getFullYear() + ": geholt von " + NAMES[q.who] + " am " + fmt(fromIso(q.day)) + ".";
+      qb.textContent = q.who === S.me ? "Zurücknehmen" : "Vergeben"; qb.disabled = q.who !== S.me;
+    } else { $("quest-state").textContent = "Noch offen in Q" + qn + " " + now.getFullYear() + "."; qb.textContent = "Hab ich gemacht"; qb.disabled = false; }
+  }
+
+  function renderWoche(today, monNow) {
+    const mon = addDays(monNow, S.weekOffset * 7), fri = addDays(mon, 4), r = roleOf(mon);
+    $("week-title").textContent = "KW " + isoWeek(mon) + (S.weekOffset === 0 ? " · diese Woche" : S.weekOffset === -1 ? " · letzte Woche" : S.weekOffset === 1 ? " · nächste Woche" : "");
+    $("week-range").textContent = fmt(mon) + " – " + fmt(fri) + (weekScored(mon) ? " · Woche " + weekNo(mon) + " des Duells" : " · vor Spielstart");
+    $("now").hidden = S.weekOffset === 0;
+    const roles = $("roles"); roles.replaceChildren();
+    for (const p of ["m", "j"]) {
+      const box = el("div", "role " + p);
+      box.append(el("b", null, NAMES[p] + " · Plan " + planOf(mon, p)), el("span", null, r.a === p ? "Küche Mo, Mi, Fr" : "Küche Di, Do"), el("span", "wk num", weekScore(S.done, mon, p) + " Punkte"));
+      roles.append(box);
+    }
+    const days = $("week-days"); days.replaceChildren();
+    for (let i = 0; i < 5; i++) {
+      const date = addDays(mon, i), di = iso(date);
+      const day = el("div", "day" + (di === today ? " is-today" : ""));
+      const h = el("div", "day-head"); h.append(el("b", null, DAYL[i]), el("small", null, fmt(date)));
+      const open = tasksFor(mon, i).filter(t => !S.done.get(t.id) && di < today && di >= START && today <= sundayOf(di)).length;
+      if (di === today) h.append(el("span", "tag", "heute")); else if (open) h.append(el("span", "tag", open + " offen"));
+      day.append(h);
+      const list = el("div", "list");
+      for (const t of tasksFor(mon, i)) list.append(taskCard(t, { showWho: true, compact: true }));
+      day.append(list); days.append(day);
+    }
+    const foot = $("week-foot"); foot.replaceChildren();
+    const res = weekResult(S.done, mon, today);
+    const r1 = el("div", "row"); r1.append(el("b", null, "Wochenduell KW " + isoWeek(mon)), el("span", "num", NAMES.m + " " + res.m + " : " + res.j + " " + NAMES.j));
+    foot.append(r1);
+    const wk = S.weeks.get(weekKey(mon));
+    foot.append(el("div", "t-hint", "Einsatz: " + ((wk && wk.stake) || DEFAULT_STAKE)));
+    if (res.final) foot.append(el("div", null, res.winner ? NAMES[res.winner] + " hat gewonnen. " + NAMES[res.loser] + " löst den Einsatz ein." : "Unentschieden, der Einsatz verfällt."));
+    else if (weekScored(mon)) foot.append(el("div", "t-hint", "Endstand nach Sonntag. Bis dahin kann nachgeholt und gerettet werden."));
+  }
+
+  function renderDuell(today, monNow, wm, wj) {
+    setScore("b-m", wm); setScore("b-j", wj);
+    $("board-label").textContent = "Wochenduell · KW " + isoWeek(monNow) + " · " + fmt(monNow) + " – " + fmt(addDays(monNow, 4));
+    const sum = wm + wj;
+    $("bar-m").style.width = (sum ? wm / sum * 100 : 50) + "%"; $("bar-j").style.width = (sum ? wj / sum * 100 : 50) + "%";
+    $("lead-m").className = "b-lead" + (wm > wj ? "" : " none"); $("lead-j").className = "b-lead" + (wj > wm ? "" : " none");
+    const tm = totalScore(S.done, "m", today), tj = totalScore(S.done, "j", today);
+    setScore("tot-m", tm); setScore("tot-j", tj);
+    const wd = weekday(fromIso(today));
+    $("board-note").textContent = wd <= 4 ? (wd === 4 ? "Letzter Spieltag. Nachholen und retten geht noch bis Sonntag." : "Noch " + (4 - wd) + (4 - wd === 1 ? " Spieltag" : " Spieltage") + " bis Freitag.")
+      : wm === wj ? "Gleichstand. Bis Sonntag kann noch gerettet werden." : NAMES[wm > wj ? "m" : "j"] + " liegt vorn. Bis Sonntag kann sich das noch drehen.";
+
+    // Einsatz
+    const key = weekKey(monNow), wk = S.weeks.get(key);
+    if ($("stake-form").hidden) { $("stake-text").textContent = (wk && wk.stake) || DEFAULT_STAKE; }
+    $("stake-by").textContent = wk && wk.by ? "Gesetzt von " + NAMES[wk.by] + " für KW " + isoWeek(monNow) + "." : "Standard-Einsatz. Ihr könnt ihn jede Woche neu festlegen.";
+    const lastMon = addDays(monNow, -7), lr = weekResult(S.done, lastMon, today), lw = S.weeks.get(weekKey(lastMon));
+    const res = $("last-result"); res.replaceChildren();
+    if (lr.final) {
+      res.hidden = false;
+      res.append(el("b", null, "Letzte Woche (KW " + isoWeek(lastMon) + "): " + NAMES.m + " " + lr.m + " : " + lr.j + " " + NAMES.j));
+      res.append(el("span", null, lr.winner ? NAMES[lr.loser] + " schuldet: " + ((lw && lw.stake) || DEFAULT_STAKE) : "Unentschieden, kein Einsatz fällig."));
+    } else res.hidden = true;
+
+    // Ränge
+    const ranks = $("ranks"); ranks.replaceChildren();
+    for (const p of ["m", "j"]) {
+      const pts = p === "m" ? tm : tj, rk = rankOf(pts);
+      const box = el("div", "rank"); const row = el("div", "row");
+      row.append(el("b", p + "-c", NAMES[p] + " · " + rk.name), el("span", null, rk.next ? pts + " / " + rk.to + " bis " + rk.next : pts + " Punkte · Endstufe"));
+      const pr = el("div", "prog"); const bar = el("i", p); bar.style.width = Math.round(rk.progress * 100) + "%"; pr.append(bar);
+      box.append(row, pr); ranks.append(box);
+    }
+    const stk = $("streaks"); stk.replaceChildren();
+    for (const p of ["m", "j"]) {
+      const s = el("div", "stat"); const v = el("div", "v " + p + "-c"); v.textContent = streak(S.done, p, today); v.append(el("small", null, " Tage Serie · Rekord " + maxStreak(S.done, p, today)));
+      s.append(el("span", "label", NAMES[p]), v); stk.append(s);
+    }
+    renderBadges(today); renderFeed();
+  }
+
+  function renderBadges(today) {
+    const all = [...S.done.values()], by = p => all.filter(d => d.who === p);
+    const anyClean = p => { for (let mon = monday(fromIso(START)); mon <= monday(fromIso(today)); mon = addDays(mon, 7)) if (cleanWeek(S.done, mon, p)) return true; return false; };
+    const wonWeek = p => { for (let mon = monday(fromIso(START)); mon <= monday(fromIso(today)); mon = addDays(mon, 7)) { const r = weekResult(S.done, mon, today); if (r.final && r.winner === p) return true; } return false; };
+    const defs = [
+      ["Erster Wisch", "Die erste Aufgabe abgehakt", p => by(p).length >= 1],
+      ["Retter in der Not", "Eine Aufgabe des anderen gerettet", p => by(p).some(d => d.kind === "rescue")],
+      ["Saubere Woche", "Alle eigenen Aufgaben einer Woche pünktlich", anyClean],
+      ["Frühstarter", "Dreimal eine Aufgabe vorgezogen", p => by(p).filter(d => d.early).length >= 3],
+      ["Fünf am Stück", "Fünf Arbeitstage in Serie pünktlich", p => maxStreak(S.done, p, today) >= 5],
+      ["Wochensieger", "Ein Wochenduell gewonnen", wonWeek],
+      ["Küchenchef", "Zehnmal die Küche gemacht", p => by(p).filter(d => d.task === "kueche").length >= 10],
+      ["Waschsalon", "Zehnmal Wäsche erledigt", p => by(p).filter(d => /^waesche/.test(d.task)).length >= 10],
+      ["Durchblick", "Die Fenster-Quest geholt", p => by(p).some(d => d.kind === "quest")],
+      ["Dreistellig", "100 Punkte gesammelt", p => totalScore(S.done, p, today) >= 100],
+      ["Halbes Tausend", "500 Punkte gesammelt", p => totalScore(S.done, p, today) >= 500],
+      ["Unverwüstlich", "Vier Wochen in Folge ohne verlorene Aufgabe", p => { let n = 0; for (let mon = monday(fromIso(today)); mon >= monday(fromIso(START)); mon = addDays(mon, -7)) { if (!weekFinal(mon, today)) continue; if (weekTasks(mon).filter(t => t.owner === p).every(t => { const d = S.done.get(t.id); return d && d.who === p; })) n++; else break; } return n >= 4; }]
+    ];
+    const box = $("badges"); box.replaceChildren();
+    for (const [n, desc, test] of defs) {
+      const b = el("div", "badge"); b.append(el("b", null, n), el("span", "t-hint", desc));
+      const who = el("div", "who");
+      for (const p of ["m", "j"]) who.append(el("span", p + (test(p) ? " on" : ""), NAMES[p]));
+      b.append(who); box.append(b);
+    }
+  }
+
+  function ago(ts) {
+    const m = Math.round((Date.now() - ts) / 60000);
+    if (m < 1) return "gerade eben"; if (m < 60) return "vor " + m + " Min."; const h = Math.round(m / 60);
+    if (h < 24) return "vor " + h + " Std."; return new Date(ts).toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" });
+  }
+  function renderFeed() {
+    const ul = $("feed"); ul.replaceChildren();
+    const items = [];
+    for (const d of S.done.values()) if (d.at) items.push({ at: d.at, who: d.who, d });
+    for (const [k, w] of S.weeks) if (w.at && w.by) items.push({ at: w.at, who: w.by, stake: w.stake, key: k });
+    items.sort((a, b) => b.at - a.at);
+    if (!items.length) { ul.append(el("li", "empty", "Noch nichts passiert. Die erste erledigte Aufgabe landet hier.")); return; }
+    for (const it of items.slice(0, 10)) {
+      const li = el("li"); let txt, pts = "", dotCls = it.who;
+      if (it.stake) { txt = NAMES[it.who] + " setzt den Einsatz: „" + it.stake + "“"; dotCls = "g"; }
+      else {
+        const d = it.d, name = d.task === "fenster" ? "Fenster" : (TASKS[d.task] ? TASKS[d.task].name : d.task);
+        if (d.kind === "rescue") { txt = NAMES[d.who] + " rettet " + name + " von " + NAMES[d.owner]; dotCls = "g"; }
+        else if (d.kind === "late") txt = NAMES[d.who] + " holt " + name + " nach";
+        else if (d.kind === "quest") { txt = NAMES[d.who] + " holt die Fenster-Quest"; dotCls = "g"; }
+        else txt = NAMES[d.who] + ": " + name + (d.early ? " (vorgezogen)" : "");
+        pts = " +" + d.pts;
+      }
+      const span = el("span", null, txt); if (pts) span.append(el("b", null, pts));
+      li.append(el("span", "dot " + dotCls), span, el("time", null, ago(it.at)));
+      ul.append(li);
+    }
+  }
+
+  function renderTables() {
+    const t = $("pts-table"); t.replaceChildren();
+    const head = el("tr"); ["Aufgabe", "Rhythmus", "Punkte"].forEach((h, i) => head.append(el("th", i === 2 ? "num" : null, h))); t.append(head);
+    for (const v of Object.values(TASKS)) { const tr = el("tr"); tr.append(el("td", null, v.name), el("td", null, v.rhythm), el("td", "num", "+" + v.pts)); t.append(tr); }
+    for (const [a, b, c] of [["Fenster (Bonus-Quest)", "vierteljährlich", "+" + FENSTER_PTS], ["Retten einer offenen Aufgabe", "Bonus", "+" + RESCUE_BONUS], ["Saubere Woche", "Bonus", "+" + CLEAN_WEEK], ["Nachgeholt", "Abzug", "halbe Punkte"]]) {
+      const tr = el("tr"); tr.append(el("td", null, a), el("td", null, b), el("td", "num", c)); t.append(tr);
+    }
+    const p = $("plan-table"); p.replaceChildren();
+    const ph = el("tr"); ["Tag", "Plan A", "Plan B"].forEach(h => ph.append(el("th", null, h))); p.append(ph);
+    PLAN.forEach((row, i) => { const tr = el("tr"); tr.append(el("td", null, DAYN[i]), el("td", null, row.a.map(k => TASKS[k].name).join(" + ")), el("td", null, row.b.map(k => TASKS[k].name).join(" + "))); p.append(tr); });
+  }
+
+  // ---- Einsatz ----
+  $("stake-btn").addEventListener("click", () => {
+    const f = $("stake-form"), open = f.hidden;
+    f.hidden = !open; $("stake-text").hidden = open; $("stake-btn").textContent = open ? "Abbrechen" : "Ändern";
+    if (open) { const wk = S.weeks.get(weekKey(monday(fromIso(todayIso())))); $("stake-input").value = (wk && wk.stake) || DEFAULT_STAKE; $("stake-input").focus(); }
+    else render();
+  });
+  $("stake-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (needMe()) return;
+    const v = $("stake-input").value.trim().slice(0, 120);
+    $("stake-form").hidden = true; $("stake-text").hidden = false; $("stake-btn").textContent = "Ändern";
+    if (!v) { render(); return; }
+    try { await writeWeek(weekKey(monday(fromIso(todayIso()))), { stake: v, by: S.me, at: Date.now() }); toast("Einsatz gesetzt. " + NAMES[S.me === "m" ? "j" : "m"] + " sieht ihn sofort."); }
+    catch (err) { toast("Einsatz konnte nicht gespeichert werden."); }
+    render();
+  });
+
+  // ---- Konfetti ----
+  const cv = $("fx"), cx = cv.getContext("2d"); let parts = [], raf = 0;
+  function burst(node, who) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = node.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+    cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const css = getComputedStyle(document.documentElement);
+    const cols = who === "gold" ? [css.getPropertyValue("--gold").trim(), "#fff", css.getPropertyValue("--ink").trim()] : [css.getPropertyValue("--" + who).trim(), css.getPropertyValue("--gold").trim(), "#fff"];
+    for (let i = 0; i < 42; i++) {
+      const a = Math.random() * Math.PI * 2, s = 2.5 + Math.random() * 5.5;
+      parts.push({ x: r.left + r.width / 2, y: r.top + r.height / 2, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 3.5, life: 1, c: cols[i % 3], w: 4 + Math.random() * 5, rot: Math.random() * 6, vr: (Math.random() - .5) * .3 });
+    }
+    if (!raf) raf = requestAnimationFrame(step);
+  }
+  function step() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(q => q.life > 0);
+    for (const q of parts) {
+      q.x += q.vx; q.y += q.vy; q.vy += .2; q.vx *= .99; q.life -= .016; q.rot += q.vr;
+      cx.save(); cx.globalAlpha = Math.max(q.life, 0); cx.translate(q.x, q.y); cx.rotate(q.rot); cx.fillStyle = q.c; cx.fillRect(-q.w / 2, -q.w * .3, q.w, q.w * .6); cx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(step) : 0;
+    if (!raf) cx.clearRect(0, 0, cv.width, cv.height);
+  }
+
+  // ---- Bedienung ----
+  function openSheet() { $("sheet").hidden = false; }
+  document.querySelectorAll(".who-btn").forEach(b => b.addEventListener("click", () => {
+    S.me = b.dataset.me; try { localStorage.setItem("putzduell-me", S.me); } catch (e) {}
+    $("sheet").hidden = true; render(); toast("Hallo " + NAMES[S.me] + ". Viel Erfolg.");
+  }));
+  $("me-chip").addEventListener("click", openSheet);
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+    S.view = b.dataset.view; try { localStorage.setItem("putzduell-view", S.view); } catch (e) {}
+    render(); window.scrollTo({ top: 0 });
+  }));
+  $("prev").addEventListener("click", () => { S.weekOffset--; render(); });
+  $("next").addEventListener("click", () => { S.weekOffset++; render(); });
+  $("now").addEventListener("click", () => { S.weekOffset = 0; render(); });
+  $("quest-btn").addEventListener("click", e => onQuest(e.currentTarget));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+  try { if (location.hash) { const h = location.hash.slice(1); if (["heute", "woche", "duell"].includes(h)) S.view = h; } } catch (e) {}
+
+  renderTables();
+  render();
+  setInterval(render, 60000);
+
+  // Hot-Update: Reiter und Wochenansicht überleben eine Neuveröffentlichung.
+  try { window.claude?.hot?.snapshot?.(() => ({ view: S.view, weekOffset: S.weekOffset })); } catch (e) {}
+  function start(data) {
+    if (data && data.view) { S.view = data.view; S.weekOffset = data.weekOffset || 0; render(); }
+  }
+  try { window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {}); } catch (e) {}
+
+  // ---- Eigener Server (Selbst-Hosting): kleiner Ersatz für die db-Capability ----
+  // Spricht mit server.js: GET /api/state, PUT/DELETE /api/<sammlung>/<id>, Live-Updates über /api/events (SSE).
+  async function httpDb() {
+    const r = await fetch("/api/state", { cache: "no-store" });
+    if (!r.ok) throw new Error("state " + r.status);
+    const state = await r.json();
+    const listeners = { done: [], weeks: [] };
+    const snapshot = c => ({ docs: Object.entries(state[c] || {}).map(([id, data]) => ({ id, exists: true, data: () => data })) });
+    const apply = s => { state.done = s.done || {}; state.weeks = s.weeks || {}; listeners.done.forEach(fn => fn(snapshot("done"))); listeners.weeks.forEach(fn => fn(snapshot("weeks"))); };
+    const es = new EventSource("/api/events");
+    es.onmessage = e => { try { apply(JSON.parse(e.data)); } catch (err) {} };
+    es.onopen = async () => { try { const x = await fetch("/api/state", { cache: "no-store" }); if (x.ok) apply(await x.json()); } catch (err) {} };
+    const req = async (method, url, body) => {
+      const x = await fetch(url, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      if (!x.ok) throw new Error(method + " " + x.status);
+      apply(await x.json());
+    };
+    return {
+      collection: c => ({
+        doc: id => ({
+          set: body => req("PUT", "/api/" + c + "/" + encodeURIComponent(id), body),
+          delete: () => req("DELETE", "/api/" + c + "/" + encodeURIComponent(id))
+        }),
+        onSnapshot: fn => { listeners[c].push(fn); setTimeout(() => fn(snapshot(c)), 0); return () => { listeners[c] = listeners[c].filter(f => f !== fn); }; }
+      })
+    };
+  }
+
+  // ---- Verbindung zum gemeinsamen Spielstand ----
+  (async () => {
+    let db = null;
+    try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
+    if (!db) { try { db = await httpDb(); } catch (e) { db = null; } }
+    if (!db) { S.mode = "local"; loadLocal(); render(); return; }
+    S.db = db; S.mode = "live";
+    const fail = () => { S.mode = "local"; S.db = null; loadLocal(); render(); };
+    db.collection("done").onSnapshot(snap => { S.done = new Map(snap.docs.map(d => [d.id, d.data()])); render(); }, fail);
+    db.collection("weeks").onSnapshot(snap => { S.weeks = new Map(snap.docs.map(d => [d.id, d.data()])); render(); }, () => {});
+    render();
+  })();
+})();
+</script>
+
+</body>
+</html>
