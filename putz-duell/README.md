@@ -4,6 +4,15 @@ Die App läuft als kleiner Webserver auf dem Rechner, auf dem auch evcc läuft. 
 
 Es gibt keine Abhängigkeiten: nur Node.js (ab Version 18) oder Docker.
 
+## Schnellster Weg: ein Befehl
+
+```bash
+git clone -b claude/cleaning-schedule-app-points-x25osi https://github.com/Snice-Eduki/snice-links.git
+sudo bash snice-links/putz-duell/install.sh
+```
+
+`install.sh` erkennt selbst, ob Docker vorhanden ist (dann Container), sonst richtet es einen systemd-Dienst mit Node.js ein und installiert Node.js bei Bedarf nach. Am Ende zeigt es die Adresse für die Handys an. Die beiden Varianten darunter sind derselbe Weg von Hand.
+
 ## Variante A: Docker (empfohlen, wenn evcc schon in Docker läuft)
 
 ```bash
