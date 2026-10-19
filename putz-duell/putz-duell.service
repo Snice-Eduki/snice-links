@@ -1,0 +1,15 @@
+[Unit]
+Description=Putz-Duell (Putzplan-App)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/putz-duell
+ExecStart=/usr/bin/node /opt/putz-duell/server.js
+Environment=PORT=8470
+Restart=on-failure
+User=putzduell
+Group=putzduell
+
+[Install]
+WantedBy=multi-user.target

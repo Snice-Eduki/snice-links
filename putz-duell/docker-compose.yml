@@ -1,0 +1,9 @@
+services:
+  putz-duell:
+    build: .
+    container_name: putz-duell
+    restart: unless-stopped
+    ports:
+      - "8470:8470"
+    volumes:
+      - ./data:/app/data
