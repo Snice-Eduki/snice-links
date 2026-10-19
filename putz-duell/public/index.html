@@ -376,7 +376,7 @@ table.plan { width: 100%; border-collapse: collapse; font-size: 13.5px; min-widt
       <div class="inner">
         <ul class="rules">
           <li>Montag bis Freitag hat jeder ein bis zwei Aufgaben. Die Küche wird täglich gemacht, die Wäsche zweimal pro Woche, alles andere einmal.</li>
-          <li>Die Pläne A und B wechseln jede Woche: In geraden Kalenderwochen hat Matthias Plan A, in ungeraden Jermaine. Über zwei Wochen ist es gleich verteilt (je 160 Punkte).</li>
+          <li>Die Pläne A und B wechseln jede Woche: In ungeraden Kalenderwochen hat Matthias Plan A, in geraden Jermaine. Über zwei Wochen ist es gleich verteilt (je 160 Punkte).</li>
           <li>Am Tag selbst oder früher in der Woche erledigt: volle Punkte. Später nachgeholt: halbe Punkte.</li>
           <li>Liegt eine Aufgabe des anderen am nächsten Tag noch offen, darfst du sie <b>retten</b>: volle Punkte plus 5 Bonus für dich, null für den anderen.</li>
           <li>Bis Sonntag kann nachgeholt oder gerettet werden. Danach verfällt die Aufgabe.</li>
@@ -393,7 +393,7 @@ table.plan { width: 100%; border-collapse: collapse; font-size: 13.5px; min-widt
     </details>
     <details>
       <summary>Wochenplan A / B</summary>
-      <div class="inner"><div class="scroll"><table class="plan" id="plan-table"></table></div><div class="t-hint">Gerade Kalenderwoche: Matthias = A, Jermaine = B. Ungerade Kalenderwoche: umgekehrt.</div></div>
+      <div class="inner"><div class="scroll"><table class="plan" id="plan-table"></table></div><div class="t-hint">Ungerade Kalenderwoche: Matthias = A, Jermaine = B. Gerade Kalenderwoche: umgekehrt.</div></div>
     </details>
   </div>
 </main>
@@ -411,8 +411,8 @@ table.plan { width: 100%; border-collapse: collapse; font-size: 13.5px; min-widt
     <h1><span>Putz</span>-<em>Duell</em></h1>
     <p>Zwei Spieler, ein Haushalt, eine Woche. Wer bist du? Dieses Handy merkt sich die Antwort.</p>
     <div class="who-btns">
-      <button class="who-btn m" type="button" data-me="m">Matthias<small>spielt in geraden Kalenderwochen Plan A</small></button>
-      <button class="who-btn j" type="button" data-me="j">Jermaine<small>spielt in ungeraden Kalenderwochen Plan A</small></button>
+      <button class="who-btn m" type="button" data-me="m">Matthias<small>spielt in ungeraden Kalenderwochen Plan A</small></button>
+      <button class="who-btn j" type="button" data-me="j">Jermaine<small>spielt in geraden Kalenderwochen Plan A</small></button>
     </div>
     <div class="foot">Du kannst das jederzeit oben rechts ändern.</div>
   </div>
@@ -464,7 +464,7 @@ table.plan { width: 100%; border-collapse: collapse; font-size: 13.5px; min-widt
   const isoWeek = d => isoWeekInfo(d).week;
   const weekKey = mon => { const w = isoWeekInfo(mon); return w.year + "-W" + pad(w.week); };
   const quarterKey = d => "fenster_" + d.getFullYear() + "-Q" + (Math.floor(d.getMonth() / 3) + 1);
-  const roleOf = mon => (isoWeek(mon) % 2 === 0 ? { a: "m", b: "j" } : { a: "j", b: "m" });
+  const roleOf = mon => (isoWeek(mon) % 2 === 1 ? { a: "m", b: "j" } : { a: "j", b: "m" });
   const planOf = (mon, p) => (roleOf(mon).a === p ? "A" : "B");
   const weekNo = mon => Math.round((mon - monday(fromIso(START))) / 6048e5) + 1;
 
